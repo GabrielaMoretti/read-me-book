@@ -114,10 +114,12 @@ Identifica capítulos usando padrões como:
 ## 🛠️ Tecnologias Utilizadas
 
 - **Python 3**: Linguagem principal
-- **tkinter**: Interface gráfica
+- **tkinter**: Interface gráfica desktop
 - **pdfplumber**: Extração de texto de PDFs
 - **pyttsx3**: Síntese de voz (TTS) open-source
-- **PyPDF2**: Suporte adicional para manipulação de PDFs
+- **pypdf**: Manipulação de PDFs
+- **Flask/FastAPI**: Frameworks web para versão online (em desenvolvimento)
+- **SQLAlchemy**: Gerenciamento de banco de dados para notas e capítulos
 
 ## 📝 Licença
 
@@ -136,9 +138,10 @@ Gabriela Moretti
 
 ## 🔮 Melhorias Futuras
 
+- [ ] **Versão Web**: Interface web usando Flask ou FastAPI
+- [ ] **Salvar Notas e Capítulos**: Sistema de anotações e marcadores persistentes
 - [ ] Exportar audiobook para arquivo MP3
 - [ ] Suporte para múltiplas vozes e idiomas
-- [ ] Marcadores e favoritos
 - [ ] Histórico de leitura
 - [ ] Detecção melhorada de layout para PDFs complexos
 - [ ] Suporte para OCR em PDFs digitalizados
