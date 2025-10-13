@@ -1,0 +1,640 @@
+/* Reader-specific styles */
+
+.reader-body {
+    background: #f5f7fa;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Reader Header */
+.reader-header {
+    background: white;
+    border-bottom: 2px solid #e9ecef;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.reader-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #f8f9ff;
+    transform: translateX(-3px);
+}
+
+.book-title-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.chapter-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.reader-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 0 2rem;
+}
+
+.control-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.play-btn {
+    width: 50px;
+    height: 50px;
+}
+
+.speed-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.speed-control label {
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#speed-slider {
+    width: 100px;
+    accent-color: #667eea;
+}
+
+/* Reader Layout */
+.reader-layout {
+    display: flex;
+    height: calc(100vh - 140px);
+}
+
+/* Chapter Sidebar */
+.chapter-sidebar {
+    width: 300px;
+    background: white;
+    border-right: 2px solid #e9ecef;
+    overflow-y: auto;
+    transition: margin-left 0.3s ease;
+}
+
+.chapter-sidebar.collapsed {
+    margin-left: -300px;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+}
+
+.sidebar-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #333;
+    margin: 0;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+.chapter-list {
+    padding: 0;
+}
+
+.chapter-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.chapter-item:hover {
+    background: #f8f9ff;
+}
+
+.chapter-item.active {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border-left: 4px solid #667eea;
+}
+
+.chapter-number {
+    background: #e9ecef;
+    color: #666;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.chapter-item.active .chapter-number {
+    background: #667eea;
+    color: white;
+}
+
+.chapter-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chapter-title {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 2px;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.chapter-meta {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Reader Content */
+.reader-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    position: relative;
+}
+
+.text-container {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.text-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.current-chapter {
+    flex: 1;
+}
+
+.chapter-label {
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.current-chapter h2 {
+    margin: 0.5rem 0 0 0;
+    color: #333;
+    font-size: 1.8rem;
+    line-height: 1.3;
+}
+
+.text-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.text-control-btn {
+    background: white;
+    border: 2px solid #e9ecef;
+    color: #666;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-control-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: #f8f9ff;
+}
+
+.text-control-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+/* Text Content */
+.text-content {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 3rem;
+    max-width: 800px;
+}
+
+.text-content p {
+    margin-bottom: 1rem;
+}
+
+.text-content.reading {
+    position: relative;
+}
+
+.text-highlight {
+    background: linear-gradient(120deg, #a8e6cf 0%, #dcedc8 100%);
+    padding: 2px 4px;
+    border-radius: 4px;
+    animation: highlight 0.3s ease;
+}
+
+@keyframes highlight {
+    from {
+        background: #ffeb3b;
+        transform: scale(1.02);
+    }
+    to {
+        background: linear-gradient(120deg, #a8e6cf 0%, #dcedc8 100%);
+        transform: scale(1);
+    }
+}
+
+/* Chapter Navigation */
+.chapter-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #f8f9fa;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-btn:hover:not(:disabled) {
+    border-color: #667eea;
+    color: #667eea;
+    background: #f8f9ff;
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.next-btn {
+    margin-left: auto;
+}
+
+/* Annotations Panel */
+.annotations-panel {
+    position: absolute;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100%;
+    background: white;
+    border-left: 2px solid #e9ecef;
+    transition: right 0.3s ease;
+    z-index: 50;
+}
+
+.annotations-panel.show {
+    right: 0;
+}
+
+.annotations-header {
+    padding: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+}
+
+.annotations-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: #333;
+}
+
+.close-annotations {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.close-annotations:hover {
+    background: white;
+    color: #667eea;
+}
+
+.annotations-list {
+    padding: 1rem;
+    height: calc(100% - 70px);
+    overflow-y: auto;
+}
+
+.annotation-item {
+    background: #f8f9ff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.annotation-text {
+    color: #333;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.annotation-meta {
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Modal Styles for Reader */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+.modal-body {
+    text-align: left;
+}
+
+.setting-group {
+    margin-bottom: 1.5rem;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.setting-group input[type="range"] {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    accent-color: #667eea;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+/* Responsive Design for Reader */
+@media (max-width: 1024px) {
+    .chapter-sidebar {
+        width: 250px;
+    }
+    
+    .annotations-panel {
+        width: 350px;
+        right: -350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .reader-header {
+        padding: 0.5rem 0;
+    }
+    
+    .reader-nav {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0 1rem;
+    }
+    
+    .reader-controls {
+        padding: 0 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .chapter-sidebar {
+        position: absolute;
+        z-index: 200;
+        width: 280px;
+        margin-left: -280px;
+        box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .chapter-sidebar.show {
+        margin-left: 0;
+    }
+    
+    .text-container {
+        padding: 1rem;
+    }
+    
+    .text-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .current-chapter h2 {
+        font-size: 1.4rem;
+    }
+    
+    .chapter-navigation {
+        flex-direction: column;
+    }
+    
+    .next-btn {
+        margin-left: 0;
+    }
+    
+    .annotations-panel {
+        width: 100%;
+        right: -100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .reader-controls {
+        gap: 10px;
+    }
+    
+    .control-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .play-btn {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .speed-control label {
+        font-size: 0.7rem;
+    }
+    
+    #speed-slider {
+        width: 80px;
+    }
+    
+    .text-content {
+        font-size: 15px;
+    }
+    
+    .chapter-item {
+        padding: 0.75rem;
+    }
+    
+    .modal-content {
+        margin: 10px;
+        padding: 1.5rem;
+    }
+}

@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  readmebook:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./audiobooks.db:/app/audiobooks.db
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    
+  # Nginx para servir arquivos estáticos (opcional para produção)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./static:/usr/share/nginx/html/static
+    depends_on:
+      - readmebook
+    restart: unless-stopped

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ book.title }} - Read Me Book</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/reader.css" rel="stylesheet">
+</head>
+<body class="reader-body">
+    <header class="reader-header">
+        <div class="reader-nav">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Voltar à Biblioteca
+            </a>
+            <div class="book-title-header">
+                <h1>{{ book.title }}</h1>
+                <span class="chapter-info">
+                    <i class="fas fa-list"></i>
+                    {{ book.total_chapters }} capítulos
+                </span>
+            </div>
+        </div>
+        
+        <div class="reader-controls">
+            <button id="play-btn" class="control-btn play-btn" title="Reproduzir">
+                <i class="fas fa-play"></i>
+            </button>
+            <button id="pause-btn" class="control-btn pause-btn" style="display: none;" title="Pausar">
+                <i class="fas fa-pause"></i>
+            </button>
+            <button id="stop-btn" class="control-btn stop-btn" title="Parar">
+                <i class="fas fa-stop"></i>
+            </button>
+            
+            <div class="speed-control">
+                <label for="speed-slider">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Velocidade: <span id="speed-value">1.0x</span>
+                </label>
+                <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+            </div>
+        </div>
+    </header>
+
+    <div class="reader-layout">
+        <aside class="chapter-sidebar" id="chapter-sidebar">
+            <div class="sidebar-header">
+                <h3>
+                    <i class="fas fa-list"></i>
+                    Capítulos
+                </h3>
+                <button class="sidebar-toggle" id="sidebar-toggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <div class="chapter-list">
+                {% for chapter in book.chapters %}
+                <div class="chapter-item {% if loop.index0 == book.current_chapter %}active{% endif %}" 
+                     data-chapter="{{ loop.index0 }}" data-chapter-id="{{ chapter.id }}">
+                    <div class="chapter-number">{{ loop.index }}</div>
+                    <div class="chapter-info">
+                        <div class="chapter-title">{{ chapter.title }}</div>
+                        <div class="chapter-meta">Página {{ chapter.start_page }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <main class="reader-content">
+            <div class="text-container">
+                <div class="text-header">
+                    <div class="current-chapter">
+                        <span class="chapter-label">Capítulo <span id="current-chapter-num">1</span></span>
+                        <h2 id="current-chapter-title">{{ book.chapters[0].title if book.chapters }}</h2>
+                    </div>
+                    
+                    <div class="text-controls">
+                        <button class="text-control-btn" id="font-size-btn" title="Tamanho da fonte">
+                            <i class="fas fa-text-height"></i>
+                        </button>
+                        <button class="text-control-btn" id="add-annotation-btn" title="Adicionar anotação">
+                            <i class="fas fa-sticky-note"></i>
+                        </button>
+                        <button class="text-control-btn" id="toggle-annotations-btn" title="Mostrar/ocultar anotações">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-content" id="text-content">
+                    {% if book.chapters %}
+                        {{ book.chapters[0].content | replace('\n', '<br>') | safe }}
+                    {% endif %}
+                </div>
+
+                <div class="chapter-navigation">
+                    <button class="nav-btn prev-btn" id="prev-chapter" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Capítulo Anterior
+                    </button>
+                    <button class="nav-btn next-btn" id="next-chapter">
+                        Próximo Capítulo
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Annotations Panel -->
+            <div class="annotations-panel" id="annotations-panel">
+                <div class="annotations-header">
+                    <h3>
+                        <i class="fas fa-sticky-note"></i>
+                        Anotações
+                    </h3>
+                    <button class="close-annotations" id="close-annotations">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="annotations-list" id="annotations-list">
+                    <!-- Annotations will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Font Size Modal -->
+    <div id="font-size-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurações de Texto</h3>
+                <button class="close-btn" onclick="closeModal('font-size-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="font-size-range">Tamanho da Fonte</label>
+                    <input type="range" id="font-size-range" min="12" max="24" value="16">
+                    <span id="font-size-display">16px</span>
+                </div>
+                <div class="setting-group">
+                    <label for="line-height-range">Espaçamento entre Linhas</label>
+                    <input type="range" id="line-height-range" min="1.2" max="2.0" step="0.1" value="1.6">
+                    <span id="line-height-display">1.6</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Annotation Modal -->
+    <div id="annotation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Anotação</h3>
+                <button class="close-btn" onclick="closeModal('annotation-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="annotation-form">
+                    <div class="form-group">
+                        <label for="annotation-text">Sua anotação:</label>
+                        <textarea id="annotation-text" rows="4" placeholder="Escreva sua anotação aqui..." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal('annotation-modal')">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Salvar Anotação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pass book data to JavaScript
+        window.bookData = {{ book | tojson | safe }};
+    </script>
+    <script src="/static/js/reader.js"></script>
+</body>
+</html>
