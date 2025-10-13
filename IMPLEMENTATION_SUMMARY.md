@@ -117,10 +117,13 @@ This application converts PDF books (digitized or native) into audiobooks with i
    - Audio generation
 
 4. **requirements.txt**
-   - PyPDF2: PDF manipulation
+   - pypdf: PDF manipulation
    - pdfplumber: Advanced PDF text extraction
    - pyttsx3: Text-to-speech synthesis
-   - pillow: Image processing support
+   - Pillow: Image processing support
+   - Flask/FastAPI: Web framework support
+   - SQLAlchemy: Database ORM for notes and chapters
+   - Additional web development utilities
 
 5. **example_usage.py** (104 lines)
    - Usage examples
