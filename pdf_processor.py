@@ -5,6 +5,8 @@ Handles PDF text extraction with AI-powered content filtering and organization
 import re
 import pdfplumber
 from typing import List, Dict, Tuple, Optional
+
+# Check AI availability at module level
 try:
     from ai_text_analyzer import AITextAnalyzer
     AI_AVAILABLE = True

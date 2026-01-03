@@ -2,7 +2,7 @@
 pypdf>=4.0.0
 pdfplumber>=0.10.0
 pyttsx3>=2.90
-Pillow>=10.0.0
+Pillow>=10.2.0
 
 # AI/NLP dependencies for intelligent text processing
 spacy>=3.7.0
@@ -27,7 +27,7 @@ Flask-SQLAlchemy>=3.0.0
 SQLAlchemy>=2.0.0
 
 # API development (alternative to Flask)
-fastapi>=0.100.0
+fastapi>=0.109.1
 uvicorn[standard]>=0.23.0
 pydantic>=2.0.0
 

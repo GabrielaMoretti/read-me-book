@@ -298,9 +298,19 @@ class ModernAudiobookApp:
         """Setup keyboard shortcuts"""
         self.root.bind('<Control-o>', lambda e: self.load_pdf())
         self.root.bind('<Control-s>', lambda e: self.export_structure())
-        self.root.bind('<space>', lambda e: self.toggle_play())
+        # Note: Space binding may interfere with text entry, so we check focus
+        self.root.bind('<space>', self._handle_space_key)
         self.root.bind('<Escape>', lambda e: self.stop_reading())
         self.root.bind('<Control-d>', lambda e: self.toggle_theme())
+    
+    def _handle_space_key(self, event):
+        """Handle space key, but only if not in a text entry widget"""
+        # Check if the focus is on a text entry widget
+        focused_widget = self.root.focus_get()
+        if isinstance(focused_widget, (tk.Entry, tk.Text)):
+            return  # Let the default behavior happen
+        self.toggle_play()
+        return "break"  # Prevent default space behavior
     
     def load_pdf(self):
         """Load a PDF file"""

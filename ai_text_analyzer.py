@@ -4,7 +4,6 @@ Uses NLP and machine learning for intelligent text organization
 """
 import re
 from typing import List, Dict, Tuple, Optional
-from collections import Counter
 import warnings
 warnings.filterwarnings('ignore')
 

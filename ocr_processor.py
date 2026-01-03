@@ -5,6 +5,8 @@ Uses Tesseract OCR for text extraction from images
 import warnings
 warnings.filterwarnings('ignore')
 
+from typing import List, Dict, Optional, TYPE_CHECKING
+
 try:
     import pytesseract
     from pdf2image import convert_from_path
@@ -12,13 +14,11 @@ try:
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
-    Image = None  # Define placeholder for type hints
+    # Use TYPE_CHECKING to avoid runtime issues while keeping type hints
+    if TYPE_CHECKING:
+        from PIL import Image
 
-from typing import List, Dict, Optional, TYPE_CHECKING
 from pathlib import Path
-
-if TYPE_CHECKING and not OCR_AVAILABLE:
-    from PIL import Image
 
 
 class OCRProcessor:
