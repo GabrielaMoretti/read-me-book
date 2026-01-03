@@ -1,9 +1,10 @@
 """
 Example Usage Script
-Demonstrates how to use the enhanced PDF processor, AI analyzer, and TTS engine
+Demonstrates how to use the enhanced PDF processor, AI analyzer, TTS engine, 
+deepdoctection, and Coqui TTS
 """
-from pdf_processor import PDFProcessor, AI_AVAILABLE
-from tts_engine import TTSEngine
+from pdf_processor import PDFProcessor, AI_AVAILABLE, DEEPDOC_AVAILABLE
+from tts_engine import TTSEngine, COQUI_AVAILABLE
 from ai_text_analyzer import AITextAnalyzer
 from ocr_processor import OCR_AVAILABLE
 import json
@@ -235,6 +236,118 @@ def demo_modern_ui():
     print("  python audiobook_app.py")
 
 
+def demo_deepdoctection():
+    """Example of deepdoctection integration"""
+    print("\n" + "=" * 70)
+    print("DEMO 9: deepdoctection Integration (Advanced Layout)")
+    print("=" * 70)
+    
+    if DEEPDOC_AVAILABLE:
+        print("\n✓ deepdoctection is AVAILABLE")
+        
+        print("\nUsage:")
+        print("  processor = PDFProcessor('book.pdf', use_deepdoctection=True)")
+        print("  pages = processor.extract_text()")
+        
+        print("\nAdvanced Features:")
+        print("  ✓ Multi-column layout detection")
+        print("  ✓ Table extraction with structure")
+        print("  ✓ Image/figure detection")
+        print("  ✓ Reading order optimization")
+        print("  ✓ Header/footer detection")
+        print("  ✓ Complex document layouts")
+        
+        print("\nBenefits:")
+        print("  • More accurate text extraction from complex PDFs")
+        print("  • Better handling of academic papers, magazines")
+        print("  • Preserves document structure and layout")
+        print("  • Improved chapter and section detection")
+    else:
+        print("\n⚠ deepdoctection NOT available")
+        print("\nTo enable deepdoctection:")
+        print("  pip install deepdoctection[pt]")
+        print("\nNote: This is a heavy package (~2GB) with model downloads")
+        print("      Consider disk space and installation time")
+        
+        print("\nAlternative:")
+        print("  The default pdfplumber extraction works well for most PDFs")
+
+
+def demo_coqui_tts():
+    """Example of Coqui TTS integration"""
+    print("\n" + "=" * 70)
+    print("DEMO 10: Coqui TTS Integration (Natural Voice)")
+    print("=" * 70)
+    
+    if COQUI_AVAILABLE:
+        print("\n✓ Coqui TTS is AVAILABLE")
+        
+        print("\nUsage:")
+        print("  tts = TTSEngine(use_coqui=True)")
+        print("  tts.save_to_file('Your text here', 'output.wav', language='en')")
+        
+        print("\nAdvanced Features:")
+        print("  ✓ Natural, human-like voices")
+        print("  ✓ Multiple languages (XTTS: 16+ languages)")
+        print("  ✓ Voice cloning from audio samples")
+        print("  ✓ Emotion and intonation control")
+        print("  ✓ Multiple speakers")
+        print("  ✓ Professional audiobook quality")
+        
+        print("\nVoice Cloning Example:")
+        print("  from coqui_tts_engine import CoquiTTSEngine")
+        print("  coqui = CoquiTTSEngine()")
+        print("  coqui.clone_voice('speaker.wav', 'Text', 'output.wav', language='pt')")
+        
+        print("\nLanguages Supported:")
+        print("  en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, ja, ko, hu...")
+    else:
+        print("\n⚠ Coqui TTS NOT available")
+        print("\nTo enable Coqui TTS:")
+        print("  pip install TTS")
+        print("\nNote: First run will download models (~1-2GB)")
+        print("      Requires ~4GB disk space total")
+        
+        print("\nAlternative:")
+        print("  The default pyttsx3 TTS works well for basic audiobooks")
+        print("  Use Coqui TTS when you need professional-quality narration")
+
+
+def demo_complete_workflow():
+    """Example of complete workflow with all features"""
+    print("\n" + "=" * 70)
+    print("DEMO 11: Complete Workflow with All Features")
+    print("=" * 70)
+    
+    print("\nStep 1: Load PDF with advanced extraction")
+    print("  processor = PDFProcessor('book.pdf', ")
+    print("                           use_ai=True,")
+    print("                           use_deepdoctection=True)")
+    print("  pages = processor.extract_text()")
+    
+    print("\nStep 2: Detect chapters and structure")
+    print("  chapters = processor.detect_chapters()")
+    print("  structure = processor.get_structured_content_for_audiobook()")
+    
+    print("\nStep 3: Generate audiobook with natural voice")
+    print("  tts = TTSEngine(use_coqui=True)")
+    print("  for chapter in structure['chapters']:")
+    print("      filename = f\"chapter_{chapter['number']}.wav\"")
+    print("      tts.save_to_file(chapter['content'], filename, language='pt')")
+    
+    print("\nStep 4: Export analysis")
+    print("  analysis = processor.export_to_json()")
+    print("  with open('analysis.json', 'w') as f:")
+    print("      json.dump(analysis, f, indent=2)")
+    
+    print("\nFeatures Used:")
+    print("  ✓ AI-powered text analysis")
+    print("  ✓ deepdoctection layout extraction")
+    print("  ✓ Chapter detection and organization")
+    print("  ✓ Coqui TTS natural voice generation")
+    print("  ✓ Complete document analysis export")
+
+
 def main():
     """Main example function"""
     print("=" * 70)
@@ -245,6 +358,8 @@ def main():
     print(f"\nSystem Status:")
     print(f"  AI Analysis: {'✓ Available' if AI_AVAILABLE else '✗ Not available'}")
     print(f"  OCR Support: {'✓ Available' if OCR_AVAILABLE else '✗ Not available'}")
+    print(f"  deepdoctection: {'✓ Available' if DEEPDOC_AVAILABLE else '✗ Not available (optional)'}")
+    print(f"  Coqui TTS: {'✓ Available' if COQUI_AVAILABLE else '✗ Not available (optional)'}")
     
     # Run all demos
     demo_basic_pdf_processing()
@@ -255,6 +370,9 @@ def main():
     demo_ocr_support()
     demo_tts_features()
     demo_modern_ui()
+    demo_deepdoctection()
+    demo_coqui_tts()
+    demo_complete_workflow()
     
     # Summary
     print("\n" + "=" * 70)
@@ -263,11 +381,15 @@ def main():
     print("\n1. Install dependencies:")
     print("   pip install -r requirements.txt")
     
-    print("\n2. Run the application:")
+    print("\n2. Optional enhancements:")
+    print("   pip install deepdoctection[pt]  # Advanced layout extraction")
+    print("   pip install TTS                 # Natural voice generation")
+    
+    print("\n3. Run the application:")
     print("   python modern_audiobook_app.py  # Modern UI (recommended)")
     print("   python audiobook_app.py         # Classic UI")
     
-    print("\n3. Load a PDF and start reading!")
+    print("\n4. Load a PDF and start reading!")
     
     print("\n" + "=" * 70)
     print("For more information, see README.md")

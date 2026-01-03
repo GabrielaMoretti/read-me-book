@@ -6,6 +6,11 @@ Um aplicativo inteligente que converte PDFs (livros digitalizados ou nativos) em
 
 ### Processamento Inteligente com IA
 - **Extração Avançada de Texto**: IA open-source para extrair e organizar texto de PDFs
+- **deepdoctection (Opcional)**: Extração avançada de layout para PDFs complexos
+  - Detecção de múltiplas colunas
+  - Extração de tabelas com estrutura preservada
+  - Identificação de imagens e figuras
+  - Ordem de leitura otimizada
 - **Detecção Inteligente de Capítulos**: Identifica automaticamente capítulos com NLP
 - **Organização Estruturada**: Separa automaticamente:
   - Capítulos e seções
@@ -24,6 +29,12 @@ Um aplicativo inteligente que converte PDFs (livros digitalizados ou nativos) em
 
 ### Recursos de Leitura
 - **Síntese de Voz Natural**: TTS open-source (pyttsx3) com vozes naturais
+- **Coqui TTS (Opcional)**: Narração profissional com voz ultra-realista
+  - Vozes naturais e expressivas
+  - Suporte a 16+ idiomas (incluindo Português)
+  - Clonagem de voz a partir de amostras de áudio
+  - Controle de entonação e emoção
+  - Qualidade de audiobook profissional
 - **Controles Completos**: Play, Pause, Stop com feedback visual
 - **Ajuste de Velocidade**: 50-300 palavras por minuto
 - **Controle de Volume**: Ajuste fino do volume de leitura
@@ -36,9 +47,14 @@ Um aplicativo inteligente que converte PDFs (livros digitalizados ou nativos) em
 
 ## 📋 Requisitos
 
+### Requisitos Básicos
 - Python 3.8 ou superior
 - Sistema operacional: Windows, Linux ou macOS
-- Para OCR (opcional): Tesseract OCR instalado no sistema
+
+### Requisitos Opcionais
+- **Para OCR**: Tesseract OCR instalado no sistema
+- **Para deepdoctection**: ~2GB espaço em disco para modelos
+- **Para Coqui TTS**: ~4GB espaço em disco para modelos
 
 ## 🚀 Instalação
 
@@ -53,7 +69,21 @@ cd read-me-book
 pip install -r requirements.txt
 ```
 
-3. (Opcional) Para suporte a OCR, instale o Tesseract:
+3. (Opcional) Para recursos avançados:
+   
+   **deepdoctection** - Extração avançada de layout:
+   ```bash
+   pip install deepdoctection[pt]
+   ```
+   Nota: Este é um pacote grande (~2GB) que baixará modelos na primeira execução.
+   
+   **Coqui TTS** - Voz natural profissional:
+   ```bash
+   pip install TTS
+   ```
+   Nota: Requer ~4GB de espaço em disco. Modelos são baixados na primeira execução.
+
+4. (Opcional) Para suporte a OCR, instale o Tesseract:
    - **Ubuntu/Debian**: `sudo apt-get install tesseract-ocr`
    - **macOS**: `brew install tesseract`
    - **Windows**: Baixe em https://github.com/UB-Mannheim/tesseract/wiki
@@ -104,8 +134,10 @@ read-me-book/
 ├── audiobook_app.py           # Aplicação GUI clássica
 ├── pdf_processor.py           # Processamento de PDF com IA
 ├── ai_text_analyzer.py        # Análise inteligente de texto
+├── deepdoc_processor.py       # Extração avançada com deepdoctection (opcional)
 ├── ocr_processor.py           # OCR para PDFs digitalizados
 ├── tts_engine.py              # Motor de síntese de voz
+├── coqui_tts_engine.py        # TTS natural com Coqui (opcional)
 ├── requirements.txt           # Dependências do projeto
 ├── example_usage.py           # Exemplos de uso
 └── README.md                  # Este arquivo
@@ -126,9 +158,19 @@ Análise inteligente de texto usando IA:
 Processamento avançado de PDF:
 - Extração de texto com limpeza inteligente
 - Integração com módulo de IA para análise profunda
+- Suporte opcional para deepdoctection
 - Detecção de capítulos multinível
 - Exportação para formato estruturado (JSON)
 - Suporte a modo com e sem IA
+
+### deepdoc_processor.py (Novo - Opcional)
+Extração avançada de layout com deepdoctection:
+- Análise de layout complexo (colunas, tabelas, imagens)
+- Detecção automática da ordem de leitura
+- Extração de tabelas com estrutura preservada
+- Identificação de cabeçalhos e rodapés
+- Suporte para documentos acadêmicos e revistas
+- Fallback automático para pdfplumber se indisponível
 
 ### ocr_processor.py
 OCR para PDFs digitalizados:
@@ -148,12 +190,25 @@ Interface moderna e acessível:
 - Barra de progresso
 - Exportação de estrutura
 
-### tts_engine.py
-Motor de síntese de voz:
+### tts_engine.py (Aprimorado)
+Motor de síntese de voz com múltiplos backends:
+- Suporte para pyttsx3 (padrão, leve)
+- Integração opcional com Coqui TTS (voz natural)
 - Configuração e gerenciamento do TTS
 - Controle de velocidade e volume
 - Suporte a múltiplas vozes
 - Conversão texto-fala natural
+- Fallback automático entre engines
+
+### coqui_tts_engine.py (Novo - Opcional)
+Motor TTS natural com Coqui:
+- Vozes ultra-realistas e expressivas
+- Suporte a 16+ idiomas (en, pt, es, fr, de, etc.)
+- Clonagem de voz a partir de amostras de áudio
+- Controle de entonação e emoção
+- Múltiplos speakers disponíveis
+- Qualidade profissional de audiobook
+- Geração de arquivos WAV de alta qualidade
 
 ## 🛠️ Tecnologias Utilizadas
 
@@ -171,12 +226,14 @@ Motor de síntese de voz:
 ### Inteligência Artificial e NLP
 - **Análise Heurística**: Classificação inteligente de conteúdo
 - **Pattern Matching Avançado**: Detecção de estrutura documental
+- **deepdoctection (Opcional)**: Análise de layout com deep learning
 - Suporte futuro para:
   - **spaCy**: Processamento de linguagem natural
   - **transformers**: Modelos de IA para análise de texto
 
 ### Áudio
 - **pyttsx3**: Síntese de voz (TTS) open-source
+- **Coqui TTS (Opcional)**: TTS neural de alta qualidade
 
 ### Web e API (Preparado para futuro)
 - **Flask**: Framework web
@@ -237,7 +294,7 @@ if ocr.is_scanned_pdf('documento_digitalizado.pdf'):
 ```python
 from tts_engine import TTSEngine
 
-# Configurar TTS
+# Configurar TTS padrão (pyttsx3)
 tts = TTSEngine()
 tts.set_rate(160)  # palavras por minuto
 tts.set_volume(0.95)
@@ -249,6 +306,114 @@ for voice in voices:
 
 # Ler texto
 tts.speak("Este é um exemplo de leitura personalizada.")
+```
+
+### Extração Avançada com deepdoctection (Opcional)
+
+```python
+from pdf_processor import PDFProcessor
+
+# Usar deepdoctection para PDFs complexos
+processor = PDFProcessor('documento_complexo.pdf', 
+                        use_ai=True, 
+                        use_deepdoctection=True)
+pages = processor.extract_text()
+
+# Verificar informações de layout
+for page in pages:
+    if 'layout_elements' in page:
+        print(f"Página {page['page_number']}: {page['columns']} coluna(s)")
+        if page['has_tables']:
+            print("  - Contém tabelas")
+        if page['has_images']:
+            print("  - Contém imagens")
+
+# Exportar análise incluindo dados do deepdoctection
+analysis = processor.export_to_json()
+if 'deepdoctection_analysis' in analysis:
+    dd = analysis['deepdoctection_analysis']
+    print(f"Total de tabelas: {dd['total_tables']}")
+    print(f"Total de imagens: {dd['total_images']}")
+    print(f"Layout complexo: {dd['has_complex_layout']}")
+```
+
+### Voz Natural com Coqui TTS (Opcional)
+
+```python
+from tts_engine import TTSEngine
+
+# Usar Coqui TTS para voz natural
+tts = TTSEngine(use_coqui=True)
+
+# Gerar audiobook com voz natural em Português
+tts.save_to_file(
+    "Este é um exemplo de narração natural em português.",
+    "output.wav",
+    language="pt"
+)
+
+# Verificar informações do modelo
+info = tts.get_engine_info()
+print(f"Engine: {info['engine_type']}")
+print(f"Idiomas suportados: {info['languages']}")
+print(f"Clonagem de voz: {info['supports_voice_cloning']}")
+```
+
+### Clonagem de Voz com Coqui TTS (Avançado)
+
+```python
+from coqui_tts_engine import CoquiTTSEngine
+
+# Inicializar com modelo XTTS para clonagem de voz
+coqui = CoquiTTSEngine(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
+
+# Clonar voz a partir de amostra de áudio (6-30 segundos)
+texto = "Este audiobook foi narrado com voz clonada em português brasileiro."
+coqui.clone_voice(
+    speaker_wav="minha_voz.wav",  # Amostra de áudio limpa
+    text=texto,
+    output_file="audiobook_clonado.wav",
+    language="pt"
+)
+
+# Gerar audiobook completo em múltiplos arquivos
+audio_files = coqui.save_to_file_with_splits(
+    text=texto_completo,
+    output_dir="audiobook_chapters",
+    max_chars=500,
+    language="pt"
+)
+print(f"Gerados {len(audio_files)} arquivos de áudio")
+```
+
+### Fluxo Completo: PDF Complexo → Audiobook Natural
+
+```python
+from pdf_processor import PDFProcessor
+from tts_engine import TTSEngine
+
+# 1. Extrair com deepdoctection
+processor = PDFProcessor('livro.pdf', 
+                        use_ai=True, 
+                        use_deepdoctection=True)
+processor.extract_text()
+chapters = processor.detect_chapters()
+structure = processor.get_structured_content_for_audiobook()
+
+# 2. Gerar audiobook com Coqui TTS
+tts = TTSEngine(use_coqui=True)
+
+for i, chapter in enumerate(structure['chapters']):
+    filename = f"chapter_{i+1:02d}.wav"
+    print(f"Gerando {filename}...")
+    
+    tts.save_to_file(
+        text=chapter['content'],
+        filename=filename,
+        language="pt"
+    )
+    
+print("Audiobook completo gerado com sucesso!")
 ```
 
 ## 🎨 Capturas de Tela
@@ -329,16 +494,21 @@ A estrutura exportada contém:
 
 ## 🚧 Melhorias Futuras
 
+### Implementado ✅
+- [x] **deepdoctection**: Extração avançada de layout para PDFs complexos
+- [x] **Coqui TTS**: Narração natural com voz ultra-realista
+- [x] Clonagem de voz para audiobooks personalizados
+- [x] Suporte a múltiplos idiomas (16+ com Coqui TTS)
+
 ### Em Desenvolvimento
 - [ ] Interface web com Flask/FastAPI
 - [ ] Sistema de notas e marcadores persistentes
-- [ ] Suporte a múltiplas vozes e idiomas avançado
 - [ ] Modo de comparação lado a lado
+- [ ] Integração de deepdoctection e Coqui TTS na interface gráfica
 
 ### Planejadas
 - [ ] Exportar audiobook para MP3/M4B
 - [ ] Integração com modelos de IA mais avançados (GPT, BERT)
-- [ ] Detecção de figuras e tabelas
 - [ ] Suporte para ePub e outros formatos
 - [ ] Aplicativo mobile
 - [ ] Sincronização na nuvem
@@ -359,10 +529,17 @@ pip install pytesseract pdf2image
 # + instalar Tesseract no sistema
 ```
 
-**Para análise avançada de IA** (Futuro):
+**Para deepdoctection** (Extração avançada de layout):
 ```bash
-pip install spacy transformers torch
+pip install deepdoctection[pt]
 ```
+Nota: Este é um pacote grande (~2GB) com modelos de deep learning. Requer tempo e espaço em disco consideráveis.
+
+**Para Coqui TTS** (Voz natural):
+```bash
+pip install TTS
+```
+Nota: Requer ~4GB de espaço em disco. Modelos são baixados automaticamente na primeira execução.
 
 ### Dependências Mínimas
 Para usar apenas funcionalidades básicas:
