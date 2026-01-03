@@ -8,6 +8,9 @@ warnings.filterwarnings('ignore')
 from typing import Callable, Optional, List
 import os
 
+# Default model for Coqui TTS (can be overridden in __init__)
+DEFAULT_COQUI_MODEL = "tts_models/multilingual/multi-dataset/xtts_v2"
+
 # Check if Coqui TTS is available
 try:
     from TTS.api import TTS
@@ -51,10 +54,9 @@ class CoquiTTSEngine:
                 # Use specified model
                 self.tts = TTS(model_name=self.model_name, gpu=self.use_gpu)
             else:
-                # Auto-select best multilingual model
-                # XTTS v2 is recommended for high quality and multilingual support
+                # Auto-select best multilingual model using constant
                 try:
-                    self.tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", gpu=self.use_gpu)
+                    self.tts = TTS(model_name=DEFAULT_COQUI_MODEL, gpu=self.use_gpu)
                 except Exception:
                     # Fallback to a lighter model
                     self.tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", gpu=self.use_gpu)

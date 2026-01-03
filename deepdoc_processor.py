@@ -46,22 +46,14 @@ class DeepDocProcessor:
         """Initialize the deepdoctection analyzer with optimal settings"""
         try:
             # Create analyzer with layout detection enabled
-            # Using a lighter model configuration for better performance
-            self.analyzer = analyzer.get_dd_analyzer(
-                config_overwrite=[
-                    "PT.LAYOUT.WEIGHTS=microsoft/table-transformer-detection/pytorch_model.bin",
-                    "PT.ITEM.WEIGHTS=microsoft/table-transformer-structure-recognition/pytorch_model.bin"
-                ]
-            )
+            # Note: Using default model configuration for better compatibility
+            # Models are automatically managed by deepdoctection
+            self.analyzer = analyzer.get_dd_analyzer()
         except Exception as e:
-            # Fallback to basic analyzer if advanced models unavailable
-            try:
-                self.analyzer = analyzer.get_dd_analyzer()
-            except Exception:
-                raise RuntimeError(
-                    f"Failed to initialize deepdoctection analyzer: {str(e)}\n"
-                    "Please ensure all model dependencies are properly installed."
-                )
+            raise RuntimeError(
+                f"Failed to initialize deepdoctection analyzer: {str(e)}\n"
+                "Please ensure all model dependencies are properly installed."
+            )
     
     def extract_text_with_layout(self, pdf_path: str) -> List[Dict]:
         """
@@ -168,7 +160,7 @@ class DeepDocProcessor:
             if elem['bbox']:
                 x_coords.append(elem['bbox']['x'])
         
-        if not x_coords:
+        if not x_coords or len(x_coords) <= 1:
             return 1
         
         # Use a simple heuristic: if elements are widely separated horizontally, likely multi-column
@@ -246,9 +238,18 @@ class DeepDocProcessor:
         """
         pages_data = self.extract_text_with_layout(pdf_path)
         
-        total_tables = sum(1 for page in pages_data if page['has_tables'])
-        total_images = sum(1 for page in pages_data if page['has_images'])
-        max_columns = max((page['columns'] for page in pages_data), default=1)
+        # Compute statistics in single pass for better performance
+        total_tables = 0
+        total_images = 0
+        max_columns = 1
+        
+        for page in pages_data:
+            if page['has_tables']:
+                total_tables += 1
+            if page['has_images']:
+                total_images += 1
+            if page['columns'] > max_columns:
+                max_columns = page['columns']
         
         return {
             'total_pages': len(pages_data),
