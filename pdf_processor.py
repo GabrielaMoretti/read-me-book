@@ -21,30 +21,38 @@ except ImportError:
 
 
 class PDFProcessor:
-    def __init__(self, pdf_path: str, use_ai: bool = True, use_deepdoctection: bool = False):
+    def __init__(self, pdf_path: str, use_ai: bool = True):
+        """
+        Initialize PDF processor with integrated advanced features
+        
+        Args:
+            pdf_path: Path to PDF file
+            use_ai: Enable AI-powered analysis (default: True)
+        """
         self.pdf_path = pdf_path
         self.pages = []
         self.chapters = []
         self.use_ai = use_ai and AI_AVAILABLE
-        self.use_deepdoctection = use_deepdoctection and DEEPDOC_AVAILABLE
         self.ai_analyzer = AITextAnalyzer() if self.use_ai else None
-        self.deepdoc_processor = None
         self.structured_content = None
         self.document_structure = None
         
-        # Initialize deepdoctection if requested and available
-        if self.use_deepdoctection:
+        # Try to use deepdoctection if available, otherwise use pdfplumber
+        self.deepdoc_processor = None
+        if DEEPDOC_AVAILABLE:
             try:
                 self.deepdoc_processor = DeepDocProcessor()
             except Exception as e:
-                print(f"Warning: Failed to initialize deepdoctection: {e}")
-                print("Falling back to standard PDF extraction")
-                self.use_deepdoctection = False
+                print(f"Note: deepdoctection unavailable, using standard extraction: {e}")
+                self.deepdoc_processor = None
         
     def extract_text(self) -> List[Dict]:
-        """Extract text from PDF pages"""
-        # Use deepdoctection if enabled and available
-        if self.use_deepdoctection and self.deepdoc_processor:
+        """
+        Extract text from PDF pages using best available method
+        Automatically uses deepdoctection if available, otherwise pdfplumber
+        """
+        # Try deepdoctection first for better layout analysis
+        if self.deepdoc_processor:
             return self._extract_with_deepdoctection()
         
         # Fall back to standard extraction
@@ -63,8 +71,7 @@ class PDFProcessor:
             return pages_data
         
         except Exception as e:
-            print(f"Warning: deepdoctection extraction failed: {e}")
-            print("Falling back to standard PDF extraction")
+            print(f"Note: deepdoctection extraction failed, using standard method: {e}")
             return self._extract_with_pdfplumber()
     
     def _extract_with_pdfplumber(self) -> List[Dict]:
@@ -198,11 +205,11 @@ class PDFProcessor:
             'structured_content': self.get_structured_content_for_audiobook(),
             'document_structure': self.get_document_structure(),
             'footnotes_references': self.get_footnotes_and_references(),
-            'extraction_method': 'deepdoctection' if self.use_deepdoctection else 'pdfplumber'
+            'extraction_method': 'deepdoctection' if self.deepdoc_processor else 'pdfplumber'
         }
         
-        # Add deepdoctection-specific data if available
-        if self.use_deepdoctection and self.deepdoc_processor:
+        # Add deepdoctection-specific data if used
+        if self.deepdoc_processor:
             try:
                 deepdoc_structure = self.deepdoc_processor.get_document_structure(self.pdf_path)
                 export_data['deepdoctection_analysis'] = {

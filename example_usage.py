@@ -13,20 +13,22 @@ import json
 def demo_basic_pdf_processing():
     """Example of basic PDF processing"""
     print("\n" + "=" * 70)
-    print("DEMO 1: Basic PDF Processing")
+    print("DEMO 1: PDF Processing with Integrated Advanced Features")
     print("=" * 70)
     
     print("\nUsage:")
     print("  processor = PDFProcessor('your_book.pdf', use_ai=True)")
-    print("  pages = processor.extract_text()")
+    print("  pages = processor.extract_text()  # Automatically uses best method")
     print("  chapters = processor.detect_chapters()")
     print("  text = processor.get_text_for_reading()")
     
-    print("\nFeatures:")
-    print("  ✓ Extract text from native PDFs")
+    print("\nIntegrated Features:")
+    print("  ✓ Automatic deepdoctection if available (complex layouts)")
+    print("  ✓ Fallback to pdfplumber (standard PDFs)")
     print("  ✓ Clean headers, footers, page numbers")
-    print("  ✓ Detect chapters with AI patterns")
-    print("  ✓ Support for both AI and basic modes")
+    print("  ✓ AI-powered chapter detection")
+    print("  ✓ Table and image detection")
+    print("  ✓ Multi-column layout support")
 
 
 def demo_ai_text_analysis():
@@ -239,17 +241,17 @@ def demo_modern_ui():
 def demo_deepdoctection():
     """Example of deepdoctection integration"""
     print("\n" + "=" * 70)
-    print("DEMO 9: deepdoctection Integration (Advanced Layout)")
+    print("DEMO 9: Integrated deepdoctection (Advanced Layout)")
     print("=" * 70)
     
     if DEEPDOC_AVAILABLE:
-        print("\n✓ deepdoctection is AVAILABLE")
+        print("\n✓ deepdoctection is INTEGRATED and ACTIVE")
         
-        print("\nUsage:")
-        print("  processor = PDFProcessor('book.pdf', use_deepdoctection=True)")
+        print("\nUsage (Automatic):")
+        print("  processor = PDFProcessor('book.pdf')  # Uses deepdoctection automatically!")
         print("  pages = processor.extract_text()")
         
-        print("\nAdvanced Features:")
+        print("\nAdvanced Features (Always Active):")
         print("  ✓ Multi-column layout detection")
         print("  ✓ Table extraction with structure")
         print("  ✓ Image/figure detection")
@@ -263,30 +265,29 @@ def demo_deepdoctection():
         print("  • Preserves document structure and layout")
         print("  • Improved chapter and section detection")
     else:
-        print("\n⚠ deepdoctection NOT available")
+        print("\n⚠ deepdoctection NOT installed - using standard pdfplumber")
         print("\nTo enable deepdoctection:")
         print("  pip install deepdoctection[pt]")
         print("\nNote: This is a heavy package (~2GB) with model downloads")
-        print("      Consider disk space and installation time")
         
-        print("\nAlternative:")
-        print("  The default pdfplumber extraction works well for most PDFs")
+        print("\nCurrent fallback:")
+        print("  The standard pdfplumber extraction works well for most PDFs")
 
 
 def demo_coqui_tts():
     """Example of Coqui TTS integration"""
     print("\n" + "=" * 70)
-    print("DEMO 10: Coqui TTS Integration (Natural Voice)")
+    print("DEMO 10: Integrated Coqui TTS (Natural Voice)")
     print("=" * 70)
     
     if COQUI_AVAILABLE:
-        print("\n✓ Coqui TTS is AVAILABLE")
+        print("\n✓ Coqui TTS is INTEGRATED and ACTIVE")
         
-        print("\nUsage:")
-        print("  tts = TTSEngine(use_coqui=True)")
-        print("  tts.save_to_file('Your text here', 'output.wav', language='en')")
+        print("\nUsage (Automatic):")
+        print("  tts = TTSEngine()  # Uses Coqui TTS automatically!")
+        print("  tts.save_to_file('Your text here', 'output.wav', language='pt')")
         
-        print("\nAdvanced Features:")
+        print("\nAdvanced Features (Always Active):")
         print("  ✓ Natural, human-like voices")
         print("  ✓ Multiple languages (XTTS: 16+ languages)")
         print("  ✓ Voice cloning from audio samples")
@@ -302,27 +303,25 @@ def demo_coqui_tts():
         print("\nLanguages Supported:")
         print("  en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, ja, ko, hu...")
     else:
-        print("\n⚠ Coqui TTS NOT available")
+        print("\n⚠ Coqui TTS NOT installed - using standard pyttsx3")
         print("\nTo enable Coqui TTS:")
         print("  pip install TTS")
         print("\nNote: First run will download models (~1-2GB)")
         print("      Requires ~4GB disk space total")
         
-        print("\nAlternative:")
-        print("  The default pyttsx3 TTS works well for basic audiobooks")
-        print("  Use Coqui TTS when you need professional-quality narration")
+        print("\nCurrent fallback:")
+        print("  The standard pyttsx3 TTS works for basic audiobooks")
 
 
 def demo_complete_workflow():
     """Example of complete workflow with all features"""
     print("\n" + "=" * 70)
-    print("DEMO 11: Complete Workflow with All Features")
+    print("DEMO 11: Complete Integrated Workflow")
     print("=" * 70)
     
-    print("\nStep 1: Load PDF with advanced extraction")
-    print("  processor = PDFProcessor('book.pdf', ")
-    print("                           use_ai=True,")
-    print("                           use_deepdoctection=True)")
+    print("\nStep 1: Load PDF (automatic advanced extraction)")
+    print("  processor = PDFProcessor('book.pdf', use_ai=True)")
+    print("  # deepdoctection is used automatically if installed!")
     print("  pages = processor.extract_text()")
     
     print("\nStep 2: Detect chapters and structure")
@@ -330,7 +329,7 @@ def demo_complete_workflow():
     print("  structure = processor.get_structured_content_for_audiobook()")
     
     print("\nStep 3: Generate audiobook with natural voice")
-    print("  tts = TTSEngine(use_coqui=True)")
+    print("  tts = TTSEngine()  # Coqui TTS if installed, pyttsx3 otherwise")
     print("  for chapter in structure['chapters']:")
     print("      filename = f\"chapter_{chapter['number']}.wav\"")
     print("      tts.save_to_file(chapter['content'], filename, language='pt')")
@@ -340,11 +339,13 @@ def demo_complete_workflow():
     print("  with open('analysis.json', 'w') as f:")
     print("      json.dump(analysis, f, indent=2)")
     
-    print("\nFeatures Used:")
+    print("\nIntegrated Features:")
+    print("  ✓ Automatic best method selection")
     print("  ✓ AI-powered text analysis")
-    print("  ✓ deepdoctection layout extraction")
+    print("  ✓ deepdoctection layout extraction (if installed)")
     print("  ✓ Chapter detection and organization")
-    print("  ✓ Coqui TTS natural voice generation")
+    print("  ✓ Coqui TTS natural voice (if installed)")
+    print("  ✓ Graceful fallback to standard methods")
     print("  ✓ Complete document analysis export")
 
 
