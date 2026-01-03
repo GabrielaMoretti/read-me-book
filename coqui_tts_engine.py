@@ -7,6 +7,7 @@ warnings.filterwarnings('ignore')
 
 from typing import Callable, Optional, List
 import os
+import re
 
 # Default model for Coqui TTS (can be overridden in __init__)
 DEFAULT_COQUI_MODEL = "tts_models/multilingual/multi-dataset/xtts_v2"
@@ -207,8 +208,6 @@ class CoquiTTSEngine:
         Returns:
             List of generated audio file paths
         """
-        import re
-        
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
         
@@ -237,8 +236,6 @@ class CoquiTTSEngine:
         Returns:
             List of text chunks
         """
-        import re
-        
         # Split by sentences
         sentences = re.split(r'(?<=[.!?])\s+', text)
         

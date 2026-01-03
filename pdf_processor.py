@@ -208,17 +208,18 @@ class PDFProcessor:
             'extraction_method': 'deepdoctection' if self.deepdoc_processor else 'pdfplumber'
         }
         
-        # Add deepdoctection-specific data if used
-        if self.deepdoc_processor:
-            try:
-                deepdoc_structure = self.deepdoc_processor.get_document_structure(self.pdf_path)
-                export_data['deepdoctection_analysis'] = {
-                    'total_tables': deepdoc_structure['total_tables'],
-                    'total_images': deepdoc_structure['total_images'],
-                    'max_columns': deepdoc_structure['max_columns'],
-                    'has_complex_layout': deepdoc_structure['has_complex_layout']
-                }
-            except Exception:
-                pass
+        # Add deepdoctection-specific data if used and not already processed
+        if self.deepdoc_processor and 'layout_elements' in (self.pages[0] if self.pages else {}):
+            # Data already available from extract_text(), calculate from cached pages
+            total_tables = sum(1 for page in self.pages if page.get('has_tables', False))
+            total_images = sum(1 for page in self.pages if page.get('has_images', False))
+            max_columns = max((page.get('columns', 1) for page in self.pages), default=1)
+            
+            export_data['deepdoctection_analysis'] = {
+                'total_tables': total_tables,
+                'total_images': total_images,
+                'max_columns': max_columns,
+                'has_complex_layout': max_columns > 1 or total_tables > 0
+            }
         
         return export_data
