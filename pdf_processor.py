@@ -1,17 +1,26 @@
 """
-PDF Processor Module
-Handles PDF text extraction and content filtering
+Enhanced PDF Processor Module
+Handles PDF text extraction with AI-powered content filtering and organization
 """
 import re
 import pdfplumber
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
+try:
+    from ai_text_analyzer import AITextAnalyzer
+    AI_AVAILABLE = True
+except ImportError:
+    AI_AVAILABLE = False
 
 
 class PDFProcessor:
-    def __init__(self, pdf_path: str):
+    def __init__(self, pdf_path: str, use_ai: bool = True):
         self.pdf_path = pdf_path
         self.pages = []
         self.chapters = []
+        self.use_ai = use_ai and AI_AVAILABLE
+        self.ai_analyzer = AITextAnalyzer() if self.use_ai else None
+        self.structured_content = None
+        self.document_structure = None
         
     def extract_text(self) -> List[Dict]:
         """Extract text from PDF pages"""
@@ -51,6 +60,13 @@ class PDFProcessor:
     
     def detect_chapters(self) -> List[Dict]:
         """Detect chapter headings in the document"""
+        if self.use_ai and self.ai_analyzer:
+            # Use AI-powered chapter detection
+            chapters = self.ai_analyzer.detect_chapters_advanced(self.pages)
+            self.chapters = chapters
+            return chapters
+        
+        # Fallback to basic pattern matching
         chapters = []
         chapter_patterns = [
             r'^(Chapter|CHAPTER|Capítulo|CAPÍTULO)\s+(\d+|[IVXLCDM]+)',
@@ -95,3 +111,46 @@ class PDFProcessor:
                 chapter_text.append(page['cleaned_text'])
         
         return '\n\n'.join(chapter_text)
+    
+    def get_structured_content_for_audiobook(self) -> Optional[Dict]:
+        """
+        Get structured content optimized for audiobook production
+        Returns organized text with metadata for each chapter
+        """
+        if not self.use_ai or not self.ai_analyzer:
+            return None
+        
+        if not self.structured_content:
+            self.structured_content = self.ai_analyzer.organize_text_for_audiobook(
+                self.pages, self.chapters
+            )
+        
+        return self.structured_content
+    
+    def get_document_structure(self) -> Optional[Dict]:
+        """Get overall document structure analysis"""
+        if not self.use_ai or not self.ai_analyzer:
+            return None
+        
+        if not self.document_structure:
+            self.document_structure = self.ai_analyzer.identify_document_structure(self.pages)
+        
+        return self.document_structure
+    
+    def get_footnotes_and_references(self) -> Optional[Dict]:
+        """Extract footnotes and references from the document"""
+        if not self.use_ai or not self.ai_analyzer:
+            return None
+        
+        return self.ai_analyzer.extract_footnotes_and_references(self.pages)
+    
+    def export_to_json(self) -> Dict:
+        """Export document analysis to JSON-serializable format"""
+        return {
+            'pdf_path': self.pdf_path,
+            'total_pages': len(self.pages),
+            'chapters': self.chapters,
+            'structured_content': self.get_structured_content_for_audiobook(),
+            'document_structure': self.get_document_structure(),
+            'footnotes_references': self.get_footnotes_and_references()
+        }
