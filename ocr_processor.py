@@ -12,9 +12,13 @@ try:
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
+    Image = None  # Define placeholder for type hints
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, TYPE_CHECKING
 from pathlib import Path
+
+if TYPE_CHECKING and not OCR_AVAILABLE:
+    from PIL import Image
 
 
 class OCRProcessor:
@@ -79,7 +83,7 @@ class OCRProcessor:
         
         return pages_data
     
-    def _extract_text_from_image(self, image: Image.Image) -> str:
+    def _extract_text_from_image(self, image) -> str:
         """
         Extract text from a single image using Tesseract
         
@@ -101,7 +105,7 @@ class OCRProcessor:
         
         return text
     
-    def _preprocess_image(self, image: Image.Image) -> Image.Image:
+    def _preprocess_image(self, image) -> 'Image':
         """
         Preprocess image to improve OCR quality
         
@@ -122,7 +126,7 @@ class OCRProcessor:
         
         return image
     
-    def _get_ocr_confidence(self, image: Image.Image) -> float:
+    def _get_ocr_confidence(self, image) -> float:
         """
         Get OCR confidence score for an image
         
