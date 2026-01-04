@@ -34,3 +34,11 @@ pydantic>=2.0.0
 # Additional utilities
 python-dotenv>=1.0.0
 ttkbootstrap>=1.10.0
+
+# Optional: Advanced layout extraction with deepdoctection
+# deepdoctection[pt]>=0.29.0
+# Note: Uncomment and install separately if needed, as it has heavy dependencies
+
+# Optional: Natural TTS with Coqui TTS
+# TTS>=0.22.0
+# Note: Uncomment and install separately if needed, as it requires significant disk space

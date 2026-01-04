@@ -13,9 +13,22 @@ try:
 except ImportError:
     AI_AVAILABLE = False
 
+# Check deepdoctection availability
+try:
+    from deepdoc_processor import DeepDocProcessor, DEEPDOC_AVAILABLE
+except ImportError:
+    DEEPDOC_AVAILABLE = False
+
 
 class PDFProcessor:
     def __init__(self, pdf_path: str, use_ai: bool = True):
+        """
+        Initialize PDF processor with integrated advanced features
+        
+        Args:
+            pdf_path: Path to PDF file
+            use_ai: Enable AI-powered analysis (default: True)
+        """
         self.pdf_path = pdf_path
         self.pages = []
         self.chapters = []
@@ -24,8 +37,45 @@ class PDFProcessor:
         self.structured_content = None
         self.document_structure = None
         
+        # Try to use deepdoctection if available, otherwise use pdfplumber
+        self.deepdoc_processor = None
+        if DEEPDOC_AVAILABLE:
+            try:
+                self.deepdoc_processor = DeepDocProcessor()
+            except Exception as e:
+                print(f"Note: deepdoctection unavailable, using standard extraction: {e}")
+                self.deepdoc_processor = None
+        
     def extract_text(self) -> List[Dict]:
-        """Extract text from PDF pages"""
+        """
+        Extract text from PDF pages using best available method
+        Automatically uses deepdoctection if available, otherwise pdfplumber
+        """
+        # Try deepdoctection first for better layout analysis
+        if self.deepdoc_processor:
+            return self._extract_with_deepdoctection()
+        
+        # Fall back to standard extraction
+        return self._extract_with_pdfplumber()
+    
+    def _extract_with_deepdoctection(self) -> List[Dict]:
+        """Extract text using deepdoctection for advanced layout analysis"""
+        try:
+            pages_data = self.deepdoc_processor.extract_text_with_layout(self.pdf_path)
+            
+            # Convert to standard format and add cleaned text
+            for page_data in pages_data:
+                page_data['cleaned_text'] = self._clean_text(page_data['text'], page_data['page_number'])
+            
+            self.pages = pages_data
+            return pages_data
+        
+        except Exception as e:
+            print(f"Note: deepdoctection extraction failed, using standard method: {e}")
+            return self._extract_with_pdfplumber()
+    
+    def _extract_with_pdfplumber(self) -> List[Dict]:
+        """Standard extraction using pdfplumber"""
         pages_data = []
         
         with pdfplumber.open(self.pdf_path) as pdf:
@@ -148,11 +198,28 @@ class PDFProcessor:
     
     def export_to_json(self) -> Dict:
         """Export document analysis to JSON-serializable format"""
-        return {
+        export_data = {
             'pdf_path': self.pdf_path,
             'total_pages': len(self.pages),
             'chapters': self.chapters,
             'structured_content': self.get_structured_content_for_audiobook(),
             'document_structure': self.get_document_structure(),
-            'footnotes_references': self.get_footnotes_and_references()
+            'footnotes_references': self.get_footnotes_and_references(),
+            'extraction_method': 'deepdoctection' if self.deepdoc_processor else 'pdfplumber'
         }
+        
+        # Add deepdoctection-specific data if used and not already processed
+        if self.deepdoc_processor and 'layout_elements' in (self.pages[0] if self.pages else {}):
+            # Data already available from extract_text(), calculate from cached pages
+            total_tables = sum(1 for page in self.pages if page.get('has_tables', False))
+            total_images = sum(1 for page in self.pages if page.get('has_images', False))
+            max_columns = max((page.get('columns', 1) for page in self.pages), default=1)
+            
+            export_data['deepdoctection_analysis'] = {
+                'total_tables': total_tables,
+                'total_images': total_images,
+                'max_columns': max_columns,
+                'has_complex_layout': max_columns > 1 or total_tables > 0
+            }
+        
+        return export_data
