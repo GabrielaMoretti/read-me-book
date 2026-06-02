@@ -1,140 +1,164 @@
 """
-Text-to-Speech Engine Module
-Handles audio conversion using pyttsx3 (default) or Coqui TTS (optional, natural voice)
+TTS Engine
+Motor de síntese de voz. Usa Coqui TTS se disponível, caso contrário pyttsx3.
 """
-import pyttsx3
+from __future__ import annotations
+
+import threading
 from typing import Callable, Optional
 
-# Check if Coqui TTS is available
+# ── Coqui TTS (opcional, voz natural) ───────────────────────────────────────
 try:
-    from coqui_tts_engine import CoquiTTSEngine, COQUI_AVAILABLE
-except ImportError:
-    COQUI_AVAILABLE = False
+    from coqui_tts_engine import CoquiTTSEngine
+    _COQUI_OK = True
+except Exception:
+    _COQUI_OK = False
+
+COQUI_AVAILABLE = _COQUI_OK
+
+# ── pyttsx3 (padrão) ────────────────────────────────────────────────────────
+try:
+    import pyttsx3 as _pyttsx3
+    _PYTTSX3_OK = True
+except Exception:
+    _PYTTSX3_OK = False
 
 
 class TTSEngine:
+    """
+    Motor TTS unificado.
+    - Prefere Coqui TTS (voz natural) se instalado.
+    - Usa pyttsx3 como fallback.
+    - Levanta RuntimeError com instrução clara se nenhum estiver disponível.
+    """
+
     def __init__(self):
-        """
-        Initialize TTS engine with best available technology
-        Automatically uses Coqui TTS if available, otherwise pyttsx3
-        """
-        self.engine = None
-        self.coqui_engine = None
+        self._lock = threading.Lock()
         self.is_reading = False
-        self.paused = False
-        
-        # Try Coqui TTS first for natural voice quality
-        if COQUI_AVAILABLE:
+        self._engine = None          # pyttsx3
+        self._coqui: Optional[CoquiTTSEngine] = None
+
+        if _COQUI_OK:
             try:
-                self.coqui_engine = CoquiTTSEngine()
-                print("Using Coqui TTS for natural voice generation")
-            except Exception as e:
-                print(f"Note: Coqui TTS unavailable, using pyttsx3: {e}")
-                self._init_pyttsx3()
-        else:
-            self._init_pyttsx3()
-    
-    def _init_pyttsx3(self):
-        """Initialize pyttsx3 engine as fallback"""
-        self.engine = pyttsx3.init()
-        self._setup_voice()
-        print("Using pyttsx3 for text-to-speech")
-        
-    def _setup_voice(self):
-        """Configure voice settings (pyttsx3 only)"""
-        if not self.engine:
+                self._coqui = CoquiTTSEngine()
+                print("[TTS] Usando Coqui TTS (voz natural)")
+                return
+            except Exception as exc:
+                print(f"[TTS] Coqui TTS falhou, tentando pyttsx3: {exc}")
+
+        if _PYTTSX3_OK:
+            try:
+                self._engine = _pyttsx3.init()
+                self._configure_pyttsx3()
+                print("[TTS] Usando pyttsx3")
+                return
+            except Exception as exc:
+                raise RuntimeError(
+                    f"pyttsx3 falhou ao inicializar: {exc}\n\n"
+                    "No Linux instale: sudo apt-get install espeak espeak-ng\n"
+                    "No Windows/macOS o motor nativo deveria funcionar automaticamente."
+                ) from exc
+
+        raise RuntimeError(
+            "Nenhum motor TTS disponível.\n"
+            "Instale pyttsx3:  pip install pyttsx3\n"
+            "Linux também precisa:  sudo apt-get install espeak"
+        )
+
+    # ── configuração ─────────────────────────────────────────────────────────
+
+    def _configure_pyttsx3(self):
+        if not self._engine:
             return
-            
-        voices = self.engine.getProperty('voices')
-        # Set to first available voice (can be customized)
+        voices = self._engine.getProperty("voices")
         if voices:
-            self.engine.setProperty('voice', voices[0].id)
-        
-        # Set speech rate (words per minute)
-        self.engine.setProperty('rate', 150)
-        
-        # Set volume (0.0 to 1.0)
-        self.engine.setProperty('volume', 0.9)
-    
+            self._engine.setProperty("voice", voices[0].id)
+        self._engine.setProperty("rate", 150)
+        self._engine.setProperty("volume", 0.9)
+
+    # ── propriedades ─────────────────────────────────────────────────────────
+
     def set_rate(self, rate: int):
-        """Set speech rate (words per minute) - pyttsx3 only"""
-        if self.engine:
-            self.engine.setProperty('rate', rate)
-    
+        """Define velocidade de leitura (palavras por minuto). Só pyttsx3."""
+        if self._engine:
+            self._engine.setProperty("rate", max(50, min(rate, 400)))
+
     def set_volume(self, volume: float):
-        """Set volume (0.0 to 1.0) - pyttsx3 only"""
-        if self.engine:
-            self.engine.setProperty('volume', volume)
-    
-    def list_voices(self):
-        """Get available voices from current TTS engine"""
-        if self.coqui_engine:
-            return self.coqui_engine.list_speakers()
-        elif self.engine:
-            return self.engine.getProperty('voices')
+        """Define volume (0.0 – 1.0). Só pyttsx3."""
+        if self._engine:
+            self._engine.setProperty("volume", max(0.0, min(volume, 1.0)))
+
+    def list_voices(self) -> list:
+        if self._coqui:
+            return self._coqui.list_speakers()
+        if self._engine:
+            return self._engine.getProperty("voices") or []
         return []
-    
+
     def set_voice(self, voice_id: str):
-        """Set voice by ID - pyttsx3 only"""
-        if self.engine:
-            self.engine.setProperty('voice', voice_id)
-    
-    def speak(self, text: str, on_word: Callable = None):
-        """Speak the given text using available TTS engine"""
-        if self.coqui_engine:
-            print("Note: Coqui TTS generates audio files. Use save_to_file() method instead.")
+        if self._engine:
+            self._engine.setProperty("voice", voice_id)
+
+    # ── leitura ──────────────────────────────────────────────────────────────
+
+    def speak(self, text: str, on_word: Optional[Callable] = None):
+        """Lê o texto em voz alta (bloqueante; chame de uma thread separada)."""
+        if not text.strip():
             return
-        
-        if self.engine:
-            if on_word:
-                self.engine.connect('started-word', on_word)
-            
+        with self._lock:
             self.is_reading = True
-            self.engine.say(text)
-            self.engine.runAndWait()
-            self.is_reading = False
-    
+            try:
+                if self._coqui:
+                    # Coqui não faz streaming direto; avisa o usuário
+                    print("[TTS] Coqui TTS: use save_to_file() para gerar áudio.")
+                    return
+                if self._engine:
+                    if on_word:
+                        self._engine.connect("started-word", on_word)
+                    self._engine.say(text)
+                    self._engine.runAndWait()
+            finally:
+                self.is_reading = False
+
     def stop(self):
-        """Stop speaking on active TTS engine"""
+        """Interrompe a leitura em andamento."""
         self.is_reading = False
-        
-        if self.coqui_engine:
-            self.coqui_engine.stop()
-        elif self.engine:
-            self.engine.stop()
-    
-    def save_to_file(self, text: str, filename: str, language: Optional[str] = None, 
-                     speaker: Optional[str] = None):
-        """
-        Save speech to audio file using best available TTS engine
-        
-        Args:
-            text: Text to convert to speech
-            filename: Output file path
-            language: Language code (Coqui TTS: 'en', 'pt', 'es', etc.)
-            speaker: Speaker name (Coqui TTS only)
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        if self.coqui_engine:
-            # Use Coqui TTS for high-quality natural voice
-            return self.coqui_engine.save_to_file(text, filename, language=language, speaker=speaker)
-        elif self.engine:
-            # Use pyttsx3 for basic TTS
-            self.engine.save_to_file(text, filename)
-            self.engine.runAndWait()
-            return True
+        if self._coqui:
+            self._coqui.stop()
+        if self._engine:
+            try:
+                self._engine.stop()
+            except Exception:
+                pass
+
+    def save_to_file(
+        self,
+        text: str,
+        filename: str,
+        language: Optional[str] = None,
+        speaker: Optional[str] = None,
+    ) -> bool:
+        """Salva a fala em arquivo de áudio."""
+        if self._coqui:
+            return self._coqui.save_to_file(
+                text, filename, language=language, speaker=speaker
+            )
+        if self._engine:
+            try:
+                self._engine.save_to_file(text, filename)
+                self._engine.runAndWait()
+                return True
+            except Exception as exc:
+                print(f"[TTS] Erro ao salvar arquivo: {exc}")
+                return False
         return False
-    
+
     def get_engine_info(self) -> dict:
-        """Get information about active TTS engine"""
-        if self.coqui_engine:
-            info = self.coqui_engine.get_model_info()
-            info['engine_type'] = 'coqui'
+        if self._coqui:
+            info = self._coqui.get_model_info()
+            info["engine_type"] = "coqui"
             return info
-        else:
-            return {
-                'engine_type': 'pyttsx3',
-                'voices': len(self.list_voices()) if self.engine else 0
-            }
+        return {
+            "engine_type": "pyttsx3",
+            "voices": len(self.list_voices()),
+        }

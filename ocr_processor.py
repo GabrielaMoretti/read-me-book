@@ -1,11 +1,11 @@
 """
-OCR Module for Scanned PDFs
-Uses Tesseract OCR for text extraction from images
+OCR Processor
+Extrai texto de PDFs escaneados via Tesseract.
+Só carrega se pytesseract e pdf2image estiverem instalados.
 """
-import warnings
-warnings.filterwarnings('ignore')
+from __future__ import annotations
 
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import Optional
 
 try:
     import pytesseract
@@ -14,225 +14,92 @@ try:
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False
-    # Use TYPE_CHECKING to avoid runtime issues while keeping type hints
-    if TYPE_CHECKING:
-        from PIL import Image
-
-from pathlib import Path
 
 
 class OCRProcessor:
-    """
-    OCR processor for extracting text from scanned PDFs
-    """
-    
-    def __init__(self, language: str = 'eng'):
-        """
-        Initialize OCR processor
-        
-        Args:
-            language: Tesseract language code (eng, por, spa, etc.)
-        """
+    """Extrai texto de PDFs digitalizados (baseados em imagem)."""
+
+    def __init__(self, language: str = "eng"):
         if not OCR_AVAILABLE:
             raise ImportError(
-                "OCR dependencies not available. Install with:\n"
-                "pip install pytesseract pdf2image\n"
-                "Also install Tesseract: https://github.com/tesseract-ocr/tesseract"
+                "Dependências OCR não instaladas.\n"
+                "Execute:  pip install pytesseract pdf2image\n"
+                "E instale o Tesseract no sistema:\n"
+                "  Ubuntu/Debian : sudo apt-get install tesseract-ocr\n"
+                "  macOS         : brew install tesseract\n"
+                "  Windows       : https://github.com/UB-Mannheim/tesseract/wiki"
             )
-        
         self.language = language
-        self.dpi = 300  # Higher DPI for better OCR quality
-    
-    def extract_text_from_pdf(self, pdf_path: str, 
-                              start_page: Optional[int] = None,
-                              end_page: Optional[int] = None) -> List[Dict]:
-        """
-        Extract text from scanned PDF using OCR
-        
-        Args:
-            pdf_path: Path to PDF file
-            start_page: First page to process (1-indexed)
-            end_page: Last page to process (1-indexed)
-            
-        Returns:
-            List of dictionaries with page number and extracted text
-        """
-        pages_data = []
-        
+        self.dpi = 300
+
+    # ── extração ─────────────────────────────────────────────────────────────
+
+    def extract_text_from_pdf(
+        self,
+        pdf_path: str,
+        start_page: Optional[int] = None,
+        end_page: Optional[int] = None,
+    ) -> list[dict]:
+        """Extrai texto página a página via OCR."""
         try:
-            # Convert PDF pages to images
             images = convert_from_path(
                 pdf_path,
                 dpi=self.dpi,
                 first_page=start_page,
-                last_page=end_page
+                last_page=end_page,
             )
-            
-            # Process each image with OCR
-            for i, image in enumerate(images, start=start_page or 1):
-                text = self._extract_text_from_image(image)
-                
-                pages_data.append({
-                    'page_number': i,
-                    'text': text,
-                    'ocr_confidence': self._get_ocr_confidence(image)
-                })
-        
-        except Exception as e:
-            raise RuntimeError(f"OCR processing failed: {str(e)}")
-        
+        except Exception as exc:
+            raise RuntimeError(f"Falha ao converter PDF para imagem: {exc}") from exc
+
+        pages_data = []
+        for i, image in enumerate(images, start=start_page or 1):
+            text = self._ocr_image(image)
+            confidence = self._confidence(image)
+            pages_data.append(
+                {"page_number": i, "text": text, "ocr_confidence": confidence}
+            )
         return pages_data
-    
-    def _extract_text_from_image(self, image) -> str:
-        """
-        Extract text from a single image using Tesseract
-        
-        Args:
-            image: PIL Image object
-            
-        Returns:
-            Extracted text
-        """
-        # Preprocess image for better OCR
-        processed_image = self._preprocess_image(image)
-        
-        # Extract text
-        text = pytesseract.image_to_string(
-            processed_image,
-            lang=self.language,
-            config='--psm 1'  # Automatic page segmentation
-        )
-        
-        return text
-    
-    def _preprocess_image(self, image) -> 'Image':
-        """
-        Preprocess image to improve OCR quality
-        
-        Args:
-            image: Input image
-            
-        Returns:
-            Preprocessed image
-        """
-        # Convert to grayscale
-        if image.mode != 'L':
-            image = image.convert('L')
-        
-        # Could add more preprocessing here:
-        # - Noise reduction
-        # - Contrast enhancement
-        # - Binarization
-        
-        return image
-    
-    def _get_ocr_confidence(self, image) -> float:
-        """
-        Get OCR confidence score for an image
-        
-        Args:
-            image: PIL Image object
-            
-        Returns:
-            Average confidence score (0-100)
-        """
+
+    def _ocr_image(self, image: "Image.Image") -> str:
+        gray = image.convert("L") if image.mode != "L" else image
+        return pytesseract.image_to_string(gray, lang=self.language, config="--psm 1")
+
+    def _confidence(self, image: "Image.Image") -> float:
         try:
             data = pytesseract.image_to_data(
-                image,
-                lang=self.language,
-                output_type=pytesseract.Output.DICT
+                image, lang=self.language, output_type=pytesseract.Output.DICT
             )
-            
-            # Calculate average confidence
-            confidences = [int(conf) for conf in data['conf'] if conf != '-1']
-            
-            if confidences:
-                return sum(confidences) / len(confidences)
-            
+            confs = [int(c) for c in data["conf"] if str(c) != "-1"]
+            return round(sum(confs) / len(confs), 1) if confs else 0.0
         except Exception:
-            pass
-        
-        return 0.0
-    
-    def extract_text_from_image_file(self, image_path: str) -> str:
-        """
-        Extract text from a single image file
-        
-        Args:
-            image_path: Path to image file
-            
-        Returns:
-            Extracted text
-        """
-        image = Image.open(image_path)
-        return self._extract_text_from_image(image)
-    
+            return 0.0
+
+    # ── utilitários ──────────────────────────────────────────────────────────
+
     def is_scanned_pdf(self, pdf_path: str, sample_pages: int = 3) -> bool:
-        """
-        Determine if a PDF is scanned (image-based) or native (text-based)
-        
-        Args:
-            pdf_path: Path to PDF file
-            sample_pages: Number of pages to sample
-            
-        Returns:
-            True if PDF appears to be scanned
-        """
+        """Retorna True se o PDF parece ser baseado em imagem (escaneado)."""
         try:
             import pdfplumber
-            
             with pdfplumber.open(pdf_path) as pdf:
-                text_chars = 0
-                pages_checked = 0
-                
-                # Check first few pages
-                for page in pdf.pages[:sample_pages]:
-                    text = page.extract_text()
-                    if text:
-                        text_chars += len(text.strip())
-                    pages_checked += 1
-                
-                # If very little text found, likely scanned
-                avg_chars = text_chars / pages_checked if pages_checked > 0 else 0
-                return avg_chars < 50  # Threshold for scanned detection
-        
+                chars = sum(
+                    len((p.extract_text() or "").strip())
+                    for p in pdf.pages[:sample_pages]
+                )
+                avg = chars / min(sample_pages, len(pdf.pages))
+            return avg < 50
         except Exception:
             return False
-    
+
+    def set_dpi(self, dpi: int):
+        if not (100 <= dpi <= 600):
+            raise ValueError("DPI deve ser entre 100 e 600")
+        self.dpi = dpi
+
     @staticmethod
-    def get_supported_languages() -> List[str]:
-        """
-        Get list of available Tesseract languages
-        
-        Returns:
-            List of language codes
-        """
+    def get_supported_languages() -> list[str]:
         if not OCR_AVAILABLE:
             return []
-        
         try:
-            languages = pytesseract.get_languages()
-            return languages
+            return pytesseract.get_languages()
         except Exception:
-            return ['eng']  # Default fallback
-    
-    def set_language(self, language: str):
-        """
-        Set OCR language
-        
-        Args:
-            language: Tesseract language code
-        """
-        self.language = language
-    
-    def set_dpi(self, dpi: int):
-        """
-        Set DPI for PDF to image conversion
-        
-        Args:
-            dpi: Dots per inch (recommended: 200-400)
-        """
-        if 100 <= dpi <= 600:
-            self.dpi = dpi
-        else:
-            raise ValueError("DPI must be between 100 and 600")
+            return ["eng"]

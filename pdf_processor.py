@@ -1,225 +1,251 @@
 """
-Enhanced PDF Processor Module
-Handles PDF text extraction with AI-powered content filtering and organization
+PDF Processor
+Extrai e organiza texto de PDFs com detecção de capítulos.
+Usa pdfplumber como base e ativa deepdoctection automaticamente se instalado.
 """
+from __future__ import annotations
+
 import re
+import json
+from pathlib import Path
+from typing import Optional
+
 import pdfplumber
-from typing import List, Dict, Tuple, Optional
 
-# Check AI availability at module level
+# ── deepdoctection (opcional) ────────────────────────────────────────────────
 try:
-    from ai_text_analyzer import AITextAnalyzer
-    AI_AVAILABLE = True
-except ImportError:
-    AI_AVAILABLE = False
+    from deepdoc_processor import DeepDocProcessor
+    _DEEPDOC_OK = True
+except Exception:
+    _DEEPDOC_OK = False
 
-# Check deepdoctection availability
-try:
-    from deepdoc_processor import DeepDocProcessor, DEEPDOC_AVAILABLE
-except ImportError:
-    DEEPDOC_AVAILABLE = False
+# ── padrões de capítulo ──────────────────────────────────────────────────────
+_CHAPTER_RE = re.compile(
+    r"""
+    ^(
+        (Chapter|CHAPTER|Capítulo|CAPÍTULO|Chapitre|Kapitel)\s+(\d+|[IVXLCDM]+)  # "Chapter 1"
+      | (Part|PART|Parte|PARTE)\s+(\d+|[IVXLCDM]+)                                # "Part I"
+      | (Section|SECTION|Seção|SEÇÃO)\s+\d+                                        # "Section 3"
+      | \d+\.\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]                                                   # "1. Título"
+      | [IVXLCDM]{1,6}\.\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ]                                       # "IV. Título"
+      | [A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s]{8,60}$                                 # TÍTULO EM CAIXA ALTA
+    )
+    """,
+    re.VERBOSE,
+)
+
+_PAGE_NUM_RE = re.compile(r"^\s*\d{1,4}\s*$")
 
 
 class PDFProcessor:
+    """Extrai, limpa e estrutura texto de PDFs para leitura em voz alta."""
+
     def __init__(self, pdf_path: str, use_ai: bool = True):
-        """
-        Initialize PDF processor with integrated advanced features
-        
-        Args:
-            pdf_path: Path to PDF file
-            use_ai: Enable AI-powered analysis (default: True)
-        """
-        self.pdf_path = pdf_path
-        self.pages = []
-        self.chapters = []
-        self.use_ai = use_ai and AI_AVAILABLE
-        self.ai_analyzer = AITextAnalyzer() if self.use_ai else None
-        self.structured_content = None
-        self.document_structure = None
-        
-        # Try to use deepdoctection if available, otherwise use pdfplumber
-        self.deepdoc_processor = None
-        if DEEPDOC_AVAILABLE:
+        self.pdf_path = str(pdf_path)
+        self.use_ai = use_ai
+        self.pages: list[dict] = []       # [{page_number, text, cleaned_text}, ...]
+        self.chapters: list[dict] = []    # [{title, page, position}, ...]
+        self._structured: Optional[dict] = None
+
+        # tenta deepdoctection
+        self._deepdoc: Optional[DeepDocProcessor] = None
+        if _DEEPDOC_OK:
             try:
-                self.deepdoc_processor = DeepDocProcessor()
-            except Exception as e:
-                print(f"Note: deepdoctection unavailable, using standard extraction: {e}")
-                self.deepdoc_processor = None
-        
-    def extract_text(self) -> List[Dict]:
-        """
-        Extract text from PDF pages using best available method
-        Automatically uses deepdoctection if available, otherwise pdfplumber
-        """
-        # Try deepdoctection first for better layout analysis
-        if self.deepdoc_processor:
-            return self._extract_with_deepdoctection()
-        
-        # Fall back to standard extraction
-        return self._extract_with_pdfplumber()
-    
-    def _extract_with_deepdoctection(self) -> List[Dict]:
-        """Extract text using deepdoctection for advanced layout analysis"""
+                self._deepdoc = DeepDocProcessor()
+            except Exception as exc:
+                print(f"[PDF] deepdoctection indisponível, usando pdfplumber: {exc}")
+
+    # ── extração ─────────────────────────────────────────────────────────────
+
+    def extract_text(self) -> list[dict]:
+        """Extrai texto de todas as páginas (melhor método disponível)."""
+        if self._deepdoc:
+            return self._extract_deepdoc()
+        return self._extract_pdfplumber()
+
+    def _extract_pdfplumber(self) -> list[dict]:
+        pages_data: list[dict] = []
         try:
-            pages_data = self.deepdoc_processor.extract_text_with_layout(self.pdf_path)
-            
-            # Convert to standard format and add cleaned text
-            for page_data in pages_data:
-                page_data['cleaned_text'] = self._clean_text(page_data['text'], page_data['page_number'])
-            
-            self.pages = pages_data
-            return pages_data
-        
-        except Exception as e:
-            print(f"Note: deepdoctection extraction failed, using standard method: {e}")
-            return self._extract_with_pdfplumber()
-    
-    def _extract_with_pdfplumber(self) -> List[Dict]:
-        """Standard extraction using pdfplumber"""
-        pages_data = []
-        
-        with pdfplumber.open(self.pdf_path) as pdf:
-            for i, page in enumerate(pdf.pages):
-                text = page.extract_text()
-                if text:
-                    pages_data.append({
-                        'page_number': i + 1,
-                        'text': text,
-                        'cleaned_text': self._clean_text(text, i + 1)
-                    })
-        
+            with pdfplumber.open(self.pdf_path) as pdf:
+                for i, page in enumerate(pdf.pages, start=1):
+                    raw = page.extract_text() or ""
+                    pages_data.append(
+                        {
+                            "page_number": i,
+                            "text": raw,
+                            "cleaned_text": self._clean(raw),
+                        }
+                    )
+        except Exception as exc:
+            raise RuntimeError(f"Falha ao abrir PDF: {exc}") from exc
         self.pages = pages_data
         return pages_data
-    
-    def _clean_text(self, text: str, page_num: int) -> str:
-        """Remove headers, footers, and page numbers from text"""
-        lines = text.split('\n')
-        cleaned_lines = []
-        
-        # Skip first and last 2 lines (likely headers/footers)
-        content_lines = lines[2:-2] if len(lines) > 4 else lines
-        
-        for line in content_lines:
-            # Skip lines that are just page numbers
-            if re.match(r'^\s*\d+\s*$', line):
+
+    def _extract_deepdoc(self) -> list[dict]:
+        try:
+            pages_data = self._deepdoc.extract_text_with_layout(self.pdf_path)  # type: ignore[union-attr]
+            for p in pages_data:
+                p["cleaned_text"] = self._clean(p["text"])
+            self.pages = pages_data
+            return pages_data
+        except Exception as exc:
+            print(f"[PDF] deepdoctection falhou, usando pdfplumber: {exc}")
+            return self._extract_pdfplumber()
+
+    # ── limpeza ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _clean(text: str) -> str:
+        """Remove cabeçalhos, rodapés e números de página."""
+        lines = text.split("\n")
+        # remove primeiras e últimas 2 linhas (prováveis cabeçalho/rodapé)
+        body = lines[2:-2] if len(lines) > 6 else lines
+        kept = []
+        for line in body:
+            stripped = line.strip()
+            if not stripped:
                 continue
-            # Skip very short lines at edges (likely headers/footers)
-            if len(line.strip()) < 3:
+            if _PAGE_NUM_RE.match(stripped):
                 continue
-            cleaned_lines.append(line)
-        
-        return '\n'.join(cleaned_lines)
-    
-    def detect_chapters(self) -> List[Dict]:
-        """Detect chapter headings in the document"""
-        if self.use_ai and self.ai_analyzer:
-            # Use AI-powered chapter detection
-            chapters = self.ai_analyzer.detect_chapters_advanced(self.pages)
-            self.chapters = chapters
-            return chapters
-        
-        # Fallback to basic pattern matching
-        chapters = []
-        chapter_patterns = [
-            r'^(Chapter|CHAPTER|Capítulo|CAPÍTULO)\s+(\d+|[IVXLCDM]+)',
-            r'^(\d+)\.\s+[A-Z]',
-            r'^[A-Z][A-Z\s]{10,}$'  # ALL CAPS headings
-        ]
-        
+            if len(stripped) < 3:
+                continue
+            kept.append(stripped)
+        return "\n".join(kept)
+
+    # ── capítulos ────────────────────────────────────────────────────────────
+
+    def detect_chapters(self) -> list[dict]:
+        """Detecta títulos de capítulo em todas as páginas."""
+        chapters: list[dict] = []
+        seen: set[str] = set()
+
         for page_data in self.pages:
-            lines = page_data['text'].split('\n')
-            for i, line in enumerate(lines):
-                line = line.strip()
-                for pattern in chapter_patterns:
-                    if re.match(pattern, line):
-                        chapters.append({
-                            'title': line,
-                            'page': page_data['page_number'],
-                            'position': i
-                        })
-                        break
-        
+            lines = page_data["text"].split("\n")
+            for i, raw_line in enumerate(lines):
+                line = raw_line.strip()
+                if not line or line in seen:
+                    continue
+                if _CHAPTER_RE.match(line):
+                    seen.add(line)
+                    chapters.append(
+                        {
+                            "title": line,
+                            "page": page_data["page_number"],
+                            "position": i,
+                        }
+                    )
+
         self.chapters = chapters
         return chapters
-    
+
+    # ── acesso ao texto ──────────────────────────────────────────────────────
+
     def get_text_for_reading(self) -> str:
-        """Get cleaned text suitable for reading"""
-        all_text = []
-        for page in self.pages:
-            all_text.append(page['cleaned_text'])
-        return '\n\n'.join(all_text)
-    
+        """Retorna todo o texto limpo, pronto para leitura."""
+        return "\n\n".join(p["cleaned_text"] for p in self.pages)
+
     def get_chapter_text(self, chapter_index: int) -> str:
-        """Get text for a specific chapter"""
+        """Retorna o texto limpo de um capítulo específico."""
         if not self.chapters or chapter_index >= len(self.chapters):
             return self.get_text_for_reading()
-        
-        start_page = self.chapters[chapter_index]['page']
-        end_page = self.chapters[chapter_index + 1]['page'] if chapter_index + 1 < len(self.chapters) else len(self.pages) + 1
-        
-        chapter_text = []
-        for page in self.pages:
-            if start_page <= page['page_number'] < end_page:
-                chapter_text.append(page['cleaned_text'])
-        
-        return '\n\n'.join(chapter_text)
-    
-    def get_structured_content_for_audiobook(self) -> Optional[Dict]:
-        """
-        Get structured content optimized for audiobook production
-        Returns organized text with metadata for each chapter
-        """
-        if not self.use_ai or not self.ai_analyzer:
-            return None
-        
-        if not self.structured_content:
-            self.structured_content = self.ai_analyzer.organize_text_for_audiobook(
-                self.pages, self.chapters
-            )
-        
-        return self.structured_content
-    
-    def get_document_structure(self) -> Optional[Dict]:
-        """Get overall document structure analysis"""
-        if not self.use_ai or not self.ai_analyzer:
-            return None
-        
-        if not self.document_structure:
-            self.document_structure = self.ai_analyzer.identify_document_structure(self.pages)
-        
-        return self.document_structure
-    
-    def get_footnotes_and_references(self) -> Optional[Dict]:
-        """Extract footnotes and references from the document"""
-        if not self.use_ai or not self.ai_analyzer:
-            return None
-        
-        return self.ai_analyzer.extract_footnotes_and_references(self.pages)
-    
-    def export_to_json(self) -> Dict:
-        """Export document analysis to JSON-serializable format"""
-        export_data = {
-            'pdf_path': self.pdf_path,
-            'total_pages': len(self.pages),
-            'chapters': self.chapters,
-            'structured_content': self.get_structured_content_for_audiobook(),
-            'document_structure': self.get_document_structure(),
-            'footnotes_references': self.get_footnotes_and_references(),
-            'extraction_method': 'deepdoctection' if self.deepdoc_processor else 'pdfplumber'
-        }
-        
-        # Add deepdoctection-specific data if used and not already processed
-        if self.deepdoc_processor and 'layout_elements' in (self.pages[0] if self.pages else {}):
-            # Data already available from extract_text(), calculate from cached pages
-            total_tables = sum(1 for page in self.pages if page.get('has_tables', False))
-            total_images = sum(1 for page in self.pages if page.get('has_images', False))
-            max_columns = max((page.get('columns', 1) for page in self.pages), default=1)
-            
-            export_data['deepdoctection_analysis'] = {
-                'total_tables': total_tables,
-                'total_images': total_images,
-                'max_columns': max_columns,
-                'has_complex_layout': max_columns > 1 or total_tables > 0
+
+        start = self.chapters[chapter_index]["page"]
+        end = (
+            self.chapters[chapter_index + 1]["page"]
+            if chapter_index + 1 < len(self.chapters)
+            else len(self.pages) + 1
+        )
+        parts = [
+            p["cleaned_text"]
+            for p in self.pages
+            if start <= p["page_number"] < end
+        ]
+        return "\n\n".join(parts)
+
+    # ── análise estruturada ──────────────────────────────────────────────────
+
+    def get_structured_content(self) -> dict:
+        """Retorna estrutura organizada por capítulos com metadados."""
+        if self._structured:
+            return self._structured
+
+        _WPM_SLOW, _WPM_MED, _WPM_FAST = 130, 150, 180
+
+        def _duration(words: int) -> dict:
+            return {
+                "slow_min": round(words / _WPM_SLOW, 1),
+                "medium_min": round(words / _WPM_MED, 1),
+                "fast_min": round(words / _WPM_FAST, 1),
             }
-        
-        return export_data
+
+        total_words = sum(
+            len(p["cleaned_text"].split()) for p in self.pages
+        )
+
+        structured_chapters = []
+        for idx, chap in enumerate(self.chapters):
+            text = self.get_chapter_text(idx)
+            words = len(text.split())
+            paragraphs = [s.strip() for s in text.split("\n\n") if s.strip()]
+            structured_chapters.append(
+                {
+                    "index": idx,
+                    "title": chap["title"],
+                    "page_start": chap["page"],
+                    "word_count": words,
+                    "paragraphs": paragraphs,
+                    "estimated_duration": _duration(words),
+                }
+            )
+
+        self._structured = {
+            "metadata": {
+                "total_pages": len(self.pages),
+                "total_chapters": len(self.chapters),
+                "total_words": total_words,
+                "estimated_duration": _duration(total_words),
+                "extraction_method": "deepdoctection" if self._deepdoc else "pdfplumber",
+            },
+            "chapters": structured_chapters,
+        }
+        return self._structured
+
+    def get_document_structure(self) -> dict:
+        """Detecta seções especiais (índice, introdução, bibliografia…)."""
+        flags = {
+            "has_table_of_contents": False,
+            "has_introduction": False,
+            "has_preface": False,
+            "has_epilogue": False,
+            "has_bibliography": False,
+            "has_index": False,
+        }
+        keywords = {
+            "has_table_of_contents": {"table of contents", "índice", "sumário", "contents"},
+            "has_introduction": {"introduction", "introdução"},
+            "has_preface": {"preface", "prefácio"},
+            "has_epilogue": {"epilogue", "epílogo"},
+            "has_bibliography": {"bibliography", "bibliografia", "referências", "references"},
+            "has_index": {"index", "índice remissivo"},
+        }
+        # verifica primeiras e últimas 10 páginas
+        sample = self.pages[:10] + self.pages[-10:]
+        for page in sample:
+            lower = page["text"].lower()
+            for flag, words in keywords.items():
+                if any(w in lower for w in words):
+                    flags[flag] = True
+        return flags
+
+    def export_to_json(self, output_path: Optional[str] = None) -> dict:
+        """Exporta análise completa em JSON."""
+        data = {
+            "pdf_path": self.pdf_path,
+            "document_structure": self.get_document_structure(),
+            **self.get_structured_content(),
+        }
+        if output_path:
+            Path(output_path).write_text(
+                json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        return data

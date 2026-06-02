@@ -1,44 +1,21 @@
-# Core PDF and TTS dependencies
-pypdf>=4.0.0
+# ── Core (obrigatório) ──────────────────────────────────────────────
 pdfplumber>=0.10.0
+pypdf>=4.0.0
 pyttsx3>=2.90
 Pillow>=10.2.0
 
-# AI/NLP dependencies for intelligent text processing
-spacy>=3.7.0
-transformers>=4.30.0
-torch>=2.0.0
-scikit-learn>=1.3.0
-
-# OCR support for scanned PDFs
-pytesseract>=0.3.10
-pdf2image>=1.16.0
-
-# Advanced text processing
-nltk>=3.8.0
-regex>=2023.0.0
-
-# Web framework dependencies
-Flask>=3.0.0
-Flask-CORS>=4.0.0
-Flask-SQLAlchemy>=3.0.0
-
-# Database
-SQLAlchemy>=2.0.0
-
-# API development (alternative to Flask)
-fastapi>=0.109.1
-uvicorn[standard]>=0.23.0
-pydantic>=2.0.0
-
-# Additional utilities
-python-dotenv>=1.0.0
+# ── UI moderna (fortemente recomendado) ─────────────────────────────
 ttkbootstrap>=1.10.0
 
-# Optional: Advanced layout extraction with deepdoctection
-# deepdoctection[pt]>=0.29.0
-# Note: Uncomment and install separately if needed, as it has heavy dependencies
+# ── OCR – só instale se precisar de PDFs escaneados ─────────────────
+# pip install pytesseract pdf2image
+# + instalar Tesseract no sistema:
+#   Ubuntu/Debian : sudo apt-get install tesseract-ocr
+#   macOS         : brew install tesseract
+#   Windows       : https://github.com/UB-Mannheim/tesseract/wiki
 
-# Optional: Natural TTS with Coqui TTS
-# TTS>=0.22.0
-# Note: Uncomment and install separately if needed, as it requires significant disk space
+# ── TTS natural (voz de qualidade) – pacote grande (~4 GB) ──────────
+# pip install TTS
+
+# ── Layout avançado (PDFs complexos, multi-coluna) – pacote grande ──
+# pip install deepdoctection[pt]
